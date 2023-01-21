@@ -1,5 +1,6 @@
 const mongoose=require('mongoose');
-const mongoURI='mongodb+srv://asifr:asifrahaman@cluster0.nelr8ne.mongodb.net/?retryWrites=true&w=majority';
+require('dotenv').config();
+const mongoURI=process.env.CONNECTION_URL
 
 const connectToMongoose=async ()=>{
     mongoose.connect(mongoURI, async()=>{
