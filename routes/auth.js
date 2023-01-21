@@ -21,6 +21,7 @@ router.post(
     body("password", "Enter a valid password").isLength({ min: 5 }),
   ],
   async (req, res) => {
+    const {name,mobile,email,password}=req.body;
     let success = false;
     //If there are errors return bad request
     const errors = validationResult(req);
@@ -51,6 +52,8 @@ router.post(
       const data = {
         user: {
           id: user.id,
+          mobile: mobile,
+          email:email,
         },
       };
       const jwt_data = jwt.sign(data, jwt_token);
@@ -175,9 +178,9 @@ router.put("/update", async (req, res) => {
 
   
   // Update user password in database
-  var decryptedName=key.decrypt(user.name,'utf8');
-  console.log(user);
-  console.log(decryptedName);
+  // var decryptedName=key.decrypt(user.name,'utf8');
+  // console.log(user);
+  // console.log(decryptedName);
   res.status(200).send({ message: "Data update successfully" });
 });
 
