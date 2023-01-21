@@ -7,6 +7,9 @@ const jwt = require("jsonwebtoken");
 const fetchuser = require("../middleware/fetchuser");
 const jwt_token = "Harry is a good boy";
 const crypto = require("crypto");
+const NodeRSA=require("node-rsa");
+
+const key=new NodeRSA({b:1024});
 
 // Create a user using POST "/api/auth". Doesn't rquire Auth
 
@@ -36,8 +39,10 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       const secPass = await bcrypt.hash(req.body.password, salt);
 
+      var encryptedName=key.encrypt(req.body.name,'base64');
+
       user = await User.create({
-        name: req.body.name,
+        name: encryptedName,
         email: req.body.email,
         password: secPass,
       });
@@ -154,12 +159,21 @@ router.put("/update", async (req, res) => {
   if (name) {
     newUserDetails.name = name;
   }
+
+  var encryptedName=key.encrypt(req.body.name,'base64');
   // Update user password in database
-  await User.findOneAndUpdate(
-    req.body.email,
-    { $set: newUserDetails },
+  const result = await User.updateOne(
+    { email: req.body.email },
+    {
+      $set: {
+        name:encryptedName,
+      },
+    },
     { new: true }
   );
+  var decryptedName=key.decrypt(user.name,'utf8');
+  console.log(user);
+  console.log(decryptedName);
   res.status(200).send({ message: "Data update successfully" });
 });
 
