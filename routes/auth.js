@@ -40,9 +40,11 @@ router.post(
       const secPass = await bcrypt.hash(req.body.password, salt);
 
       var encryptedName=key.encrypt(req.body.name,'base64');
+      var encryptedMobile = key.encrypt(req.body.mobile,'base64');
 
       user = await User.create({
         name: encryptedName,
+        mobile: encryptedMobile,
         email: req.body.email,
         password: secPass,
       });
@@ -86,9 +88,13 @@ router.post(
         return res.status(404).json({ success, errors: errors.array() });
       }
 
+      var decryptedMobile = key.decrypt(user.mobile,'utf8');
+
       const data = {
         user: {
           id: user.id,
+          email:user.email,
+          mobile:decryptedMobile
         },
       };
       const authtoken = jwt.sign(data, jwt_token);
@@ -100,19 +106,6 @@ router.post(
     }
   }
 );
-//Route 3 for logged in user details
-router.post("/getuser", fetchuser, async (req, res) => {
-  try {
-    const userID = req.user.id;
-    const user = await User.findById(userID);
-
-    //To get only a particular column
-    // const user = await User.findById(userID).select("password");
-    res.send(user);
-  } catch (err) {
-    res.status(404).send("Internal server error");
-  }
-});
 
 router.post("/resetpassword", async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
@@ -140,11 +133,11 @@ router.post("/resetpassword", async (req, res) => {
     { new: true }
   );
 
-  res.status(200).send({ message: "Password reset successfully" });
+  res.status(200).send({ message: `Password reset successfully and new password in hashed forrm is:${hashedNewPassword}` });
 });
 
 router.put("/update", async (req, res) => {
-  const { name, email, password } = await req.body;
+  const { name, mobile,email, password } = await req.body;
   // Find user in database
   const user = await User.findOne({ email });
   if (!user) {
@@ -155,22 +148,33 @@ router.put("/update", async (req, res) => {
   if (!isPasswordCorrect) {
     return res.status(401).send({ message: "Old password is incorrect" });
   }
-  const newUserDetails = {};
   if (name) {
-    newUserDetails.name = name;
+    var encryptedName=key.encrypt(name,'base64');
+    await User.updateOne(
+      { email: req.body.email },
+      {
+        $set: {
+          name:encryptedName,
+        },
+      },
+      { new: true }
+    );
+  }
+  if(mobile){
+    var encryptedMobile=key.encrypt(mobile,'base64');
+    await User.updateOne(
+      { email: req.body.email },
+      {
+        $set: {
+          mobile:encryptedMobile,
+        },
+      },
+      { new: true }
+    );
   }
 
-  var encryptedName=key.encrypt(req.body.name,'base64');
+  
   // Update user password in database
-  const result = await User.updateOne(
-    { email: req.body.email },
-    {
-      $set: {
-        name:encryptedName,
-      },
-    },
-    { new: true }
-  );
   var decryptedName=key.decrypt(user.name,'utf8');
   console.log(user);
   console.log(decryptedName);

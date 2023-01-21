@@ -1,5 +1,5 @@
 const jwt=require('jsonwebtoken');
-const jwt_token = "Harry is a good boy";
+const jwt_token = "Hello world";
 
 const fetchuser=async (req,res,next)=>{
     const token=await req.header('auth-token');
